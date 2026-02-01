@@ -11,26 +11,36 @@ body{
   background:#0f172a;
   color:white;
 }
+
 header{
   padding:20px;
   background:#020617;
   text-align:center;
 }
+
 .container{
   max-width:1100px;
   margin:auto;
   padding:20px;
 }
+
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
   gap:15px;
 }
+
 .card{
   background:#111827;
   padding:15px;
   border-radius:10px;
 }
+
+.card img{
+  width:100%;
+  border-radius:8px;
+}
+
 button{
   background:#2563eb;
   color:white;
@@ -39,11 +49,18 @@ button{
   border-radius:6px;
   cursor:pointer;
 }
+
+.danger{
+  background:#dc2626;
+}
+
 #cart{
   background:#020617;
   padding:15px;
   margin-top:20px;
+  border-radius:10px;
 }
+
 footer{
   background:#020617;
   padding:20px;
@@ -59,6 +76,7 @@ footer{
 </header>
 
 <div class="container">
+
 <h2>Products</h2>
 <div class="grid" id="products"></div>
 
@@ -68,6 +86,7 @@ footer{
   <h3>Total: <span id="total">0</span> DZD</h3>
   <button onclick="checkout()">Checkout</button>
 </div>
+
 </div>
 
 <footer>
@@ -79,36 +98,63 @@ footer{
 <script>
 let cart = [];
 
-async function loadProducts(){
-  const res = await fetch("/data/products.json");
-  const data = await res.json();
+function getProducts(){
+  const data = localStorage.getItem("products");
+  if(!data){
+    return [];
+  }
+  return JSON.parse(data);
+}
 
-  document.getElementById("products").innerHTML = data.products.map(p => `
+async function loadProducts(){
+  let products = getProducts();
+
+  if(products.length === 0){
+    // If admin hasn't added anything yet, load default file
+    const res = await fetch("/data/products.json");
+    const data = await res.json();
+    products = data.products;
+    localStorage.setItem("products", JSON.stringify(products));
+  }
+
+  document.getElementById("products").innerHTML = products.map(p => `
     <div class="card">
-      <img src="${p.image}" width="100%">
+      <img src="${p.image}">
       <h3>${p.name}</h3>
-      <p>${p.description}</p>
-      <b>${p.price} DZD</b><br><br>
+      <p>${p.description || ""}</p>
+      <b>${p.price} DZD</b><br>
+      <small>In stock: ${p.stock || 0}</small><br><br>
       <button onclick="addToCart(${p.id})">Add to cart</button>
     </div>
   `).join("");
 }
 
-async function addToCart(id){
-  const res = await fetch("/data/products.json");
-  const data = await res.json();
-  const product = data.products.find(p => p.id === id);
+function addToCart(id){
+  const products = getProducts();
+  const product = products.find(p => p.id === id);
 
-  cart.push({...product, qty:1});
+  const existing = cart.find(item => item.id === id);
+
+  if(existing){
+    existing.qty += 1;
+  } else {
+    cart.push({...product, qty:1});
+  }
+
   updateCart();
 }
 
 function updateCart(){
   let total = 0;
+
   document.getElementById("cart-items").innerHTML = cart.map((p,i)=> {
     total += p.price * p.qty;
-    return `<p>${p.name} (x${p.qty}) - ${p.price*p.qty} DZD 
-      <button onclick="removeItem(${i})">X</button></p>`;
+    return `
+      <p>
+        ${p.name} (x${p.qty}) - ${p.price * p.qty} DZD
+        <button onclick="removeItem(${i})" class="danger">X</button>
+      </p>
+    `;
   }).join("");
 
   document.getElementById("total").innerText = total;
@@ -120,11 +166,17 @@ function removeItem(i){
 }
 
 function checkout(){
+  if(cart.length === 0){
+    alert("Your cart is empty!");
+    return;
+  }
+
   localStorage.setItem("order", JSON.stringify(cart));
   window.location.href = "/success.html";
 }
 
 loadProducts();
 </script>
+
 </body>
 </html>
