@@ -72,6 +72,24 @@ button{
 <div id="products"></div>
 
 <script>
+  document.getElementById("imageFile").addEventListener("change", function(event){
+  const file = event.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(e){
+    const base64Image = e.target.result;
+    document.getElementById("image").value = base64Image;
+
+    const preview = document.getElementById("preview");
+    preview.src = base64Image;
+    preview.style.display = "block";
+  };
+
+  reader.readAsDataURL(file);
+});
+
 function getProducts(){
   const data = localStorage.getItem("products");
   if(!data){
