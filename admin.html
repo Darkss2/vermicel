@@ -172,6 +172,12 @@ function saveProduct(){
 }
 
 function editProduct(id){
+  document.getElementById("image").value = p.image;
+
+const preview = document.getElementById("preview");
+preview.src = p.image;
+preview.style.display = "block";
+
   const products = getProducts();
   const p = products.find(p => p.id === id);
 
