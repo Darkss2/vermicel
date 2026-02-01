@@ -1,44 +1,183 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Panel</title>
 <style>
-body{background:#0f172a;color:white;font-family:Arial;}
-.card{background:#111827;padding:15px;margin:10px;border-radius:10px;}
-input,button{margin:5px;padding:8px;}
+body{
+  background:#0f172a;
+  color:white;
+  font-family:Arial;
+  margin:0;
+  padding:20px;
+}
+.card{
+  background:#111827;
+  padding:15px;
+  margin:10px 0;
+  border-radius:10px;
+}
+input, button, select, textarea{
+  padding:8px;
+  margin:5px 0;
+  width:100%;
+}
+.row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+button{
+  background:#2563eb;
+  color:white;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+.danger{
+  background:#dc2626;
+}
 </style>
 </head>
 <body>
 
-<h1>Admin Panel (Test CMS)</h1>
+<h1>Admin Panel (Working Test CMS)</h1>
 
-<input id="name" placeholder="Product Name">
-<input id="price" placeholder="Price">
-<input id="image" placeholder="Image URL">
-<button onclick="addProduct()">Add Product</button>
+<h2>Add / Edit Product</h2>
 
-<h2>Products</h2>
+<div class="card">
+  <input id="prodId" type="hidden">
+
+  <input id="name" placeholder="Product Name">
+  <textarea id="desc" placeholder="Description"></textarea>
+
+  <div class="row">
+    <input id="price" type="number" placeholder="Price (DZD)">
+    <input id="stock" type="number" placeholder="Stock quantity">
+  </div>
+
+  <input id="image" placeholder="Image URL">
+
+  <input id="category" placeholder="Category (optional)">
+
+  <button onclick="saveProduct()">Save Product</button>
+</div>
+
+<h2>Products List</h2>
 <div id="products"></div>
 
 <script>
-async function loadProducts(){
-  const res = await fetch("/data/products.json");
-  const data = await res.json();
+function getProducts(){
+  const data = localStorage.getItem("products");
+  if(!data){
+    const defaultProducts = [
+      {
+        id: 1,
+        name: "كولا مثلجة",
+        description: "مشروب بارد",
+        price: 100,
+        stock: 20,
+        category: "Drinks",
+        image: "https://via.placeholder.com/300"
+      }
+    ];
+    localStorage.setItem("products", JSON.stringify(defaultProducts));
+    return defaultProducts;
+  }
+  return JSON.parse(data);
+}
 
-  document.getElementById("products").innerHTML = data.products.map(p=>`
+function saveProducts(products){
+  localStorage.setItem("products", JSON.stringify(products));
+}
+
+function loadProducts(){
+  const products = getProducts();
+  document.getElementById("products").innerHTML = products.map(p => `
     <div class="card">
-      <b>${p.name}</b> - ${p.price} DZD
-      <button onclick="deleteProduct(${p.id})">Delete</button>
+      <b>${p.name}</b><br>
+      Price: ${p.price} DZD<br>
+      Stock: ${p.stock}<br>
+      Category: ${p.category || "—"}<br><br>
+
+      <button onclick="editProduct(${p.id})">Edit</button>
+      <button class="danger" onclick="deleteProduct(${p.id})">Delete</button>
     </div>
   `).join("");
 }
 
-async function addProduct(){
-  alert("In real version this will save to database / JSON via API");
+function saveProduct(){
+  const products = getProducts();
+
+  const idField = document.getElementById("prodId").value;
+  const name = document.getElementById("name").value;
+  const desc = document.getElementById("desc").value;
+  const price = Number(document.getElementById("price").value);
+  const stock = Number(document.getElementById("stock").value);
+  const image = document.getElementById("image").value;
+  const category = document.getElementById("category").value;
+
+  if(!name || !price){
+    alert("Name and price are required!");
+    return;
+  }
+
+  if(idField){
+    // EDIT EXISTING
+    const index = products.findIndex(p => p.id == idField);
+    products[index] = {
+      id: Number(idField),
+      name, description: desc, price, stock, image, category
+    };
+  } else {
+    // ADD NEW
+    const newId = products.length ? Math.max(...products.map(p=>p.id)) + 1 : 1;
+    products.push({
+      id: newId,
+      name,
+      description: desc,
+      price,
+      stock,
+      image,
+      category
+    });
+  }
+
+  saveProducts(products);
+  clearForm();
+  loadProducts();
 }
 
-async function deleteProduct(id){
-  alert("In real version this will delete via API");
+function editProduct(id){
+  const products = getProducts();
+  const p = products.find(p => p.id === id);
+
+  document.getElementById("prodId").value = p.id;
+  document.getElementById("name").value = p.name;
+  document.getElementById("desc").value = p.description;
+  document.getElementById("price").value = p.price;
+  document.getElementById("stock").value = p.stock;
+  document.getElementById("image").value = p.image;
+  document.getElementById("category").value = p.category;
+}
+
+function deleteProduct(id){
+  if(!confirm("Delete this product?")) return;
+  let products = getProducts();
+  products = products.filter(p => p.id !== id);
+  saveProducts(products);
+  loadProducts();
+}
+
+function clearForm(){
+  document.getElementById("prodId").value = "";
+  document.getElementById("name").value = "";
+  document.getElementById("desc").value = "";
+  document.getElementById("price").value = "";
+  document.getElementById("stock").value = "";
+  document.getElementById("image").value = "";
+  document.getElementById("category").value = "";
 }
 
 loadProducts();
