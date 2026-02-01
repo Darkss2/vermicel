@@ -1,0 +1,22 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "كولا مثلجة",
+      "description": "مشروب بارد",
+      "price": 100,
+      "category": "Drinks",
+      "stock": 20,
+      "image": "https://via.placeholder.com/300"
+    },
+    {
+      "id": 2,
+      "name": "عصير برتقال",
+      "description": "طبيعي 100%",
+      "price": 150,
+      "category": "Drinks",
+      "stock": 15,
+      "image": "https://via.placeholder.com/300"
+    }
+  ]
+}
