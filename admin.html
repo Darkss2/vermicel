@@ -57,7 +57,11 @@ button{
     <input id="stock" type="number" placeholder="Stock quantity">
   </div>
 
-  <input id="image" placeholder="Image URL">
+  <input type="file" id="imageFile" accept="image/*">
+<br>
+<img id="preview" style="max-width:200px; display:none; border-radius:8px;">
+<input type="hidden" id="image">
+
 
   <input id="category" placeholder="Category (optional)">
 
